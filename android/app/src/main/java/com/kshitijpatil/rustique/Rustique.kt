@@ -15,4 +15,6 @@ class Rustique {
     external fun getArchitecture(): String
     @JvmName("grayscale")
     external fun grayscale(buffer: ByteBuffer, width: Int, height: Int, stride: Int)
+    @JvmName("invert")
+    external fun invert(buffer: ByteBuffer, width: Int, height: Int, stride: Int)
 }

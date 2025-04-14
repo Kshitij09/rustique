@@ -48,6 +48,7 @@ class MainActivity : ComponentActivity() {
                     architecture = lib.getArchitecture(),
                     image = image,
                     onGrayscale = { turnGrayscale(lib) },
+                    onInvert = { turnInverted(lib) },
                     onRestore = ::restore
                 )
             }
@@ -79,6 +80,17 @@ class MainActivity : ComponentActivity() {
         image = bitmap.asImageBitmap()
     }
 
+    private fun turnInverted(lib: Rustique) {
+        val buffer = ByteBuffer.allocateDirect(originalBuffer.capacity())
+        buffer.put(originalBuffer)
+        originalBuffer.rewind()
+        buffer.rewind()
+        lib.invert(buffer, bitmap.width, bitmap.height, bitmap.rowBytes)
+        buffer.rewind()
+        bitmap.copyPixelsFromBuffer(buffer)
+        image = bitmap.asImageBitmap()
+    }
+
     private fun restore() {
         bitmap.copyPixelsFromBuffer(originalBuffer)
         originalBuffer.rewind()
@@ -92,6 +104,7 @@ fun MainScreen(
     image: ImageBitmap?,
     modifier: Modifier = Modifier,
     onGrayscale: () -> Unit = {},
+    onInvert: () -> Unit = {},
     onRestore: () -> Unit = {},
 ) {
     Scaffold(modifier = modifier.fillMaxSize()) { innerPadding ->
@@ -117,6 +130,9 @@ fun MainScreen(
             ) {
                 Button(onClick = onGrayscale) {
                     Text("gray")
+                }
+                Button(onClick = onInvert) {
+                    Text("invert")
                 }
                 Button(onClick = onRestore) {
                     Text("restore")

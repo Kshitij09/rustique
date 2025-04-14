@@ -29,16 +29,13 @@ impl Bgra {
         self.g = gray;
         self.b = gray;
     }
-}
 
-// Helper function to invert a pixel's B, G, R channels
-fn invert_pixel(data: &mut [u8], pixel_start: usize) {
-    data[pixel_start] = 255 - data[pixel_start];     // B
-    data[pixel_start + 1] = 255 - data[pixel_start + 1]; // G
-    data[pixel_start + 2] = 255 - data[pixel_start + 2]; // R
-    // Alpha channel (pixel_start + 3) remains unchanged
+    fn invert_pixel(self: &mut Self) {
+        self.r = 255 - self.r;
+        self.g = 255 - self.g;
+        self.b = 255 - self.b;
+    }
 }
-
 
 #[cfg(target_os = "android")]
 #[allow(non_snake_case)]
@@ -90,6 +87,33 @@ pub mod android {
 
                 if pixel_idx < data.len() {
                     data[pixel_idx].grayscale()
+                }
+            }
+        }
+    }
+
+    #[unsafe(no_mangle)]
+    pub extern "C" fn Java_com_kshitijpatil_rustique_Rustique_invert(
+        env: JNIEnv,
+        _class: JClass,
+        buffer: JByteBuffer,
+        width: jint,
+        height: jint,
+        stride: jint,
+    ) {
+        // Get direct ByteBuffer address
+        let buffer_addr = unsafe { env.get_direct_buffer_address(&buffer).unwrap() };
+        let buffer_capacity = (stride * height) as usize;
+        let pixels_per_row = stride as usize / size_of::<Bgra>();
+        // Create a mutable slice from the buffer
+        let mut data = unsafe { slice::from_raw_parts_mut(buffer_addr as *mut Bgra, buffer_capacity) };
+        // Iterate over each pixel in the image
+        for y in 0..height as usize {
+            for x in 0..width as usize {
+                let pixel_idx = y * pixels_per_row + x;
+
+                if pixel_idx < data.len() {
+                    data[pixel_idx].invert_pixel()
                 }
             }
         }
