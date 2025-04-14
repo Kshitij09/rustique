@@ -34,6 +34,7 @@ import kotlinx.coroutines.launch
 import java.nio.ByteBuffer
 
 class MainActivity : ComponentActivity() {
+    private var state by mutableStateOf(ImageState.Undefined)
     private var image by mutableStateOf<ImageBitmap?>(null)
     private lateinit var bitmap: Bitmap
     private lateinit var originalBuffer: ByteBuffer
@@ -56,6 +57,7 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun loadImage() {
+        if (state == ImageState.Original) return
         lifecycleScope.launch(Dispatchers.IO) {
             val opts = Options().apply {
                 inMutable = true
@@ -66,10 +68,12 @@ class MainActivity : ComponentActivity() {
             bitmap.copyPixelsToBuffer(originalBuffer)
             originalBuffer.rewind()
             image = bitmap.asImageBitmap()
+            state = ImageState.Original
         }
     }
 
     private fun turnGrayscale(lib: Rustique) {
+        if (state == ImageState.Grayscale) return
         val buffer = ByteBuffer.allocateDirect(originalBuffer.capacity())
         buffer.put(originalBuffer)
         originalBuffer.rewind()
@@ -78,9 +82,11 @@ class MainActivity : ComponentActivity() {
         buffer.rewind()
         bitmap.copyPixelsFromBuffer(buffer)
         image = bitmap.asImageBitmap()
+        state = ImageState.Grayscale
     }
 
     private fun turnInverted(lib: Rustique) {
+        if (state == ImageState.Inverted) return
         val buffer = ByteBuffer.allocateDirect(originalBuffer.capacity())
         buffer.put(originalBuffer)
         originalBuffer.rewind()
@@ -89,6 +95,7 @@ class MainActivity : ComponentActivity() {
         buffer.rewind()
         bitmap.copyPixelsFromBuffer(buffer)
         image = bitmap.asImageBitmap()
+        state = ImageState.Inverted
     }
 
     private fun restore() {
@@ -140,4 +147,12 @@ fun MainScreen(
             }
         }
     }
+}
+
+
+private enum class ImageState {
+    Undefined,
+    Original,
+    Grayscale,
+    Inverted
 }
