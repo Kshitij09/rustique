@@ -13,6 +13,24 @@ pub fn get_architecture() -> String {
     arch.to_string()
 }
 
+struct Bgra {
+    b: u8,
+    g: u8,
+    r: u8,
+    a: u8,
+}
+
+impl Bgra {
+    fn grayscale(self: &mut Self) {
+        let gray = ((0.299 * self.r as f32) +
+            (0.587 * self.g as f32) +
+            (0.114 * self.b as f32)) as u8;
+        self.r = gray;
+        self.g = gray;
+        self.b = gray;
+    }
+}
+
 // Helper function to invert a pixel's B, G, R channels
 fn invert_pixel(data: &mut [u8], pixel_start: usize) {
     data[pixel_start] = 255 - data[pixel_start];     // B
@@ -21,15 +39,6 @@ fn invert_pixel(data: &mut [u8], pixel_start: usize) {
     // Alpha channel (pixel_start + 3) remains unchanged
 }
 
-fn grayscale(data: &mut[u8], pixel_start: usize) {
-    let (b,g,r) = (data[pixel_start], data[pixel_start+1], data[pixel_start+2]);
-    let gray = ((0.299 * r as f32) +
-        (0.587 * g as f32) +
-        (0.114 * b as f32)) as u8;
-    data[pixel_start] = gray;
-    data[pixel_start+1] = gray;
-    data[pixel_start+2] = gray;
-}
 
 #[cfg(target_os = "android")]
 #[allow(non_snake_case)]
@@ -37,14 +46,14 @@ pub mod android {
     use std::slice;
     use jni::JNIEnv;
     use jni::objects::{JByteBuffer, JClass, JObject};
-    use jni::sys::{jint, jobject, jstring};
-    use crate::{add, get_architecture, grayscale, invert_pixel};
+    use jni::sys::{jint, jstring};
+    use crate::{add, get_architecture, Bgra};
 
     // The native function implemented in Rust.
     #[unsafe(no_mangle)]
     pub extern "C" fn Java_com_kshitijpatil_rustique_Rustique_add(
         left: u64,
-        right: u64
+        right: u64,
     ) -> u64 {
         add(left, right)
     }
@@ -60,7 +69,7 @@ pub mod android {
     }
 
     #[unsafe(no_mangle)]
-    pub extern "system" fn Java_com_kshitijpatil_rustique_Rustique_processBitmap(
+    pub extern "C" fn Java_com_kshitijpatil_rustique_Rustique_grayscale(
         env: JNIEnv,
         _class: JClass,
         buffer: JByteBuffer,
@@ -71,23 +80,21 @@ pub mod android {
         // Get direct ByteBuffer address
         let buffer_addr = unsafe { env.get_direct_buffer_address(&buffer).unwrap() };
         let buffer_capacity = (stride * height) as usize;
+        let pixels_per_row = stride as usize / size_of::<Bgra>();
         // Create a mutable slice from the buffer
-        let mut data = unsafe { slice::from_raw_parts_mut(buffer_addr, buffer_capacity) };
+        let mut data = unsafe { slice::from_raw_parts_mut(buffer_addr as *mut Bgra, buffer_capacity) };
         // Iterate over each pixel in the image
         for y in 0..height as usize {
             for x in 0..width as usize {
-                let pixel_start = y * stride as usize + x * 4;
+                let pixel_idx = y * pixels_per_row + x;
 
-                // Check if we are within bounds
-                if pixel_start + 3 < data.len() {
-                    // Invert B, G, R channels and leave A unchanged
-                    grayscale(&mut data, pixel_start);
+                if pixel_idx < data.len() {
+                    data[pixel_idx].grayscale()
                 }
             }
         }
     }
 }
-
 
 
 #[cfg(test)]

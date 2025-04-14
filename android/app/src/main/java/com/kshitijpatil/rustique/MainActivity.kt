@@ -30,7 +30,6 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.lifecycleScope
 import com.kshitijpatil.rustique.ui.theme.RustiqueTheme
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.nio.ByteBuffer
 
@@ -74,7 +73,7 @@ class MainActivity : ComponentActivity() {
         buffer.put(originalBuffer)
         originalBuffer.rewind()
         buffer.rewind()
-        lib.processBitmap(buffer, bitmap.width, bitmap.height, bitmap.rowBytes)
+        lib.grayscale(buffer, bitmap.width, bitmap.height, bitmap.rowBytes)
         buffer.rewind()
         bitmap.copyPixelsFromBuffer(buffer)
         image = bitmap.asImageBitmap()
