@@ -61,7 +61,7 @@ class MainActivity : ComponentActivity() {
                 inMutable = true
                 inPreferredConfig = Bitmap.Config.ARGB_8888
             }
-            bitmap = BitmapFactory.decodeResource(resources, R.drawable.minecraft, opts)
+            bitmap = BitmapFactory.decodeResource(resources, R.drawable.buildings, opts)
             originalBuffer = ByteBuffer.allocateDirect(bitmap.byteCount)
             bitmap.copyPixelsToBuffer(originalBuffer)
             originalBuffer.rewind()
@@ -120,7 +120,7 @@ fun MainScreen(
                 Image(
                     bitmap = image,
                     contentDescription = null,
-                    modifier = Modifier.fillMaxWidth().weight(1f).padding(24.dp)
+                    modifier = Modifier.fillMaxWidth().weight(1f)
                 )
             }
             Row(
