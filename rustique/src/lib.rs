@@ -1,6 +1,4 @@
-pub fn add(left: u64, right: u64) -> u64 {
-    left + right
-}
+mod image;
 
 pub fn get_architecture() -> String {
     let arch = match std::env::consts::ARCH {
@@ -12,21 +10,16 @@ pub fn get_architecture() -> String {
     };
     arch.to_string()
 }
+
 #[cfg(target_os = "android")]
 #[allow(non_snake_case)]
 pub mod android {
+    use std::slice;
     use jni::JNIEnv;
-    use jni::sys::jstring;
-    use crate::{add, get_architecture};
-
-    // The native function implemented in Rust.
-    #[unsafe(no_mangle)]
-    pub extern "C" fn Java_com_kshitijpatil_rustique_Rustique_add(
-        left: u64,
-        right: u64
-    ) -> u64 {
-        add(left, right)
-    }
+    use jni::objects::{JByteBuffer, JClass};
+    use jni::sys::{jint, jstring};
+    use crate::get_architecture;
+    use crate::image::Bgra;
 
     #[unsafe(no_mangle)]
     pub extern "C" fn Java_com_kshitijpatil_rustique_Rustique_getArchitecture(
@@ -37,14 +30,36 @@ pub mod android {
             .expect("couldn't create java string")
             .into_raw()
     }
-}
-#[cfg(test)]
-mod tests {
-    use super::*;
 
-    #[test]
-    fn it_works() {
-        let result = add(2, 2);
-        assert_eq!(result, 4);
+    #[unsafe(no_mangle)]
+    pub extern "C" fn Java_com_kshitijpatil_rustique_Rustique_grayscale(
+        env: JNIEnv,
+        _class: JClass,
+        buffer: JByteBuffer,
+        height: jint,
+        stride: jint,
+    ) {
+        let buffer_addr = unsafe { env.get_direct_buffer_address(&buffer).unwrap() };
+        let buffer_capacity = (stride * height) as usize;
+        let pixels = unsafe { slice::from_raw_parts_mut(buffer_addr as *mut Bgra, buffer_capacity) };
+        for px in pixels {
+            px.grayscale()
+        }
+    }
+
+    #[unsafe(no_mangle)]
+    pub extern "C" fn Java_com_kshitijpatil_rustique_Rustique_invert(
+        env: JNIEnv,
+        _class: JClass,
+        buffer: JByteBuffer,
+        height: jint,
+        stride: jint,
+    ) {
+        let buffer_addr = unsafe { env.get_direct_buffer_address(&buffer).unwrap() };
+        let buffer_capacity = (stride * height) as usize;
+        let pixels = unsafe { slice::from_raw_parts_mut(buffer_addr as *mut Bgra, buffer_capacity) };
+        for px in pixels {
+            px.invert()
+        }
     }
 }
