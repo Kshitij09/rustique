@@ -1,0 +1,30 @@
+# Target directory (build artifacts)
+target/
+
+# Intermediate files created during compilation
+**/*.rs.bk
+
+# Generated documentation
+docs/
+
+# Build script output
+build/
+
+Cargo.lock
+
+# IDE and editor-specific files
+.idea/
+.vscode/
+*.swp
+*.swo
+*.iml
+
+# macOS-specific files
+.DS_Store
+
+# Windows-specific files
+Thumbs.db
+
+# Other temporary files
+*.log
+*.tmp
