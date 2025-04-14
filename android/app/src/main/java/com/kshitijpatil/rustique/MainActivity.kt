@@ -17,11 +17,12 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        val lib = Rustique()
         setContent {
             RustiqueTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     Greeting(
-                        name = "Android",
+                        name = "Android: ${lib.add(130u, 100u)}",
                         modifier = Modifier.padding(innerPadding)
                     )
                 }

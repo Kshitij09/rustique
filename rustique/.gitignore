@@ -1,5 +1,6 @@
 # Target directory (build artifacts)
 target/
+!target/**/lib*.so
 
 # Intermediate files created during compilation
 **/*.rs.bk
