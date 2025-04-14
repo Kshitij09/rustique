@@ -15,16 +15,13 @@ pub fn get_architecture() -> String {
 #[cfg(target_os = "android")]
 #[allow(non_snake_case)]
 pub mod android {
-    use jni::objects::JClass;
     use jni::JNIEnv;
     use jni::sys::jstring;
     use crate::{add, get_architecture};
 
     // The native function implemented in Rust.
     #[unsafe(no_mangle)]
-    pub unsafe extern "C" fn Java_com_kshitijpatil_rustique_Rustique_add(
-        _: JNIEnv,
-        _: JClass,
+    pub extern "C" fn Java_com_kshitijpatil_rustique_Rustique_add(
         left: u64,
         right: u64
     ) -> u64 {
