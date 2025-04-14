@@ -22,7 +22,7 @@ class MainActivity : ComponentActivity() {
             RustiqueTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     Greeting(
-                        name = "Android: ${lib.add(130u, 100u)}",
+                        name = "Android: ${lib.getArchitecture()}",
                         modifier = Modifier.padding(innerPadding)
                     )
                 }
