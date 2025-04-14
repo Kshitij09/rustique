@@ -1,12 +1,10 @@
 package com.kshitijpatil.rustique
 
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
-import android.graphics.BitmapFactory.Options
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.viewModels
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -19,96 +17,37 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.lifecycleScope
 import com.kshitijpatil.rustique.ui.theme.RustiqueTheme
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import java.nio.ByteBuffer
 
 class MainActivity : ComponentActivity() {
-    private var state by mutableStateOf(ImageState.Undefined)
-    private var image by mutableStateOf<ImageBitmap?>(null)
-    private lateinit var bitmap: Bitmap
-    private lateinit var originalBuffer: ByteBuffer
+    private val viewModel: ImageViewModel by viewModels()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        val lib = Rustique()
-        loadImage()
+        viewModel.loadImage(resources, R.drawable.buildings)
         setContent {
+            val state by viewModel.stateFlow.collectAsState()
             RustiqueTheme {
                 MainScreen(
-                    architecture = lib.getArchitecture(),
-                    image = image,
-                    onGrayscale = { turnGrayscale(lib) },
-                    onInvert = { turnInverted(lib) },
-                    onRestore = ::restore
+                    state = state,
+                    onGrayscale = { viewModel.turnGrayscale() },
+                    onInvert = { viewModel.turnInverted() },
+                    onRestore = { viewModel.restore() }
                 )
             }
         }
-    }
-
-    private fun loadImage() {
-        if (state == ImageState.Original) return
-        lifecycleScope.launch(Dispatchers.IO) {
-            val opts = Options().apply {
-                inMutable = true
-                inPreferredConfig = Bitmap.Config.ARGB_8888
-            }
-            bitmap = BitmapFactory.decodeResource(resources, R.drawable.buildings, opts)
-            originalBuffer = ByteBuffer.allocateDirect(bitmap.byteCount)
-            bitmap.copyPixelsToBuffer(originalBuffer)
-            originalBuffer.rewind()
-            image = bitmap.asImageBitmap()
-            state = ImageState.Original
-        }
-    }
-
-    private fun turnGrayscale(lib: Rustique) {
-        if (state == ImageState.Grayscale) return
-        val buffer = ByteBuffer.allocateDirect(originalBuffer.capacity())
-        buffer.put(originalBuffer)
-        originalBuffer.rewind()
-        buffer.rewind()
-        lib.grayscale(buffer, bitmap.width, bitmap.height, bitmap.rowBytes)
-        buffer.rewind()
-        bitmap.copyPixelsFromBuffer(buffer)
-        image = bitmap.asImageBitmap()
-        state = ImageState.Grayscale
-    }
-
-    private fun turnInverted(lib: Rustique) {
-        if (state == ImageState.Inverted) return
-        val buffer = ByteBuffer.allocateDirect(originalBuffer.capacity())
-        buffer.put(originalBuffer)
-        originalBuffer.rewind()
-        buffer.rewind()
-        lib.invert(buffer, bitmap.width, bitmap.height, bitmap.rowBytes)
-        buffer.rewind()
-        bitmap.copyPixelsFromBuffer(buffer)
-        image = bitmap.asImageBitmap()
-        state = ImageState.Inverted
-    }
-
-    private fun restore() {
-        bitmap.copyPixelsFromBuffer(originalBuffer)
-        originalBuffer.rewind()
-        image = bitmap.asImageBitmap()
     }
 }
 
 @Composable
 fun MainScreen(
-    architecture: String,
-    image: ImageBitmap?,
+    state: ImageUiState,
     modifier: Modifier = Modifier,
     onGrayscale: () -> Unit = {},
     onInvert: () -> Unit = {},
@@ -122,10 +61,10 @@ fun MainScreen(
                 .fillMaxSize()
                 .padding(top = 24.dp)
         ) {
-            Text("Hello Android: $architecture")
-            if (image != null) {
+            Text("Hello Android: ${state.architecture}")
+            if (state.image != null) {
                 Image(
-                    bitmap = image,
+                    bitmap = state.image,
                     contentDescription = null,
                     modifier = Modifier.fillMaxWidth().weight(1f)
                 )
@@ -149,10 +88,3 @@ fun MainScreen(
     }
 }
 
-
-private enum class ImageState {
-    Undefined,
-    Original,
-    Grayscale,
-    Inverted
-}

@@ -9,12 +9,12 @@ class Rustique {
         }
     }
 
-    @JvmName("add")
-    external fun add(left: UInt, right: UInt): UInt
     @JvmName("getArchitecture")
     external fun getArchitecture(): String
+
     @JvmName("grayscale")
-    external fun grayscale(buffer: ByteBuffer, width: Int, height: Int, stride: Int)
+    external fun grayscale(buffer: ByteBuffer, height: Int, stride: Int)
+
     @JvmName("invert")
-    external fun invert(buffer: ByteBuffer, width: Int, height: Int, stride: Int)
+    external fun invert(buffer: ByteBuffer, height: Int, stride: Int)
 }
