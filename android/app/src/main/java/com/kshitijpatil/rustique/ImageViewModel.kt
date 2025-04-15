@@ -68,7 +68,7 @@ class ImageViewModel : ViewModel() {
         if (state.previewState == PreviewState.Grayscale) return
         val originalBuffer = originalBuffer ?: return
         val bitmap = bitmap ?: return
-        applyTransformation(originalBuffer, bitmap) { buffer, bitmap ->
+        applyTransformation(originalBuffer, bitmap, PreviewState.Grayscale) { buffer, bitmap ->
             lib.grayscale(buffer, bitmap.height, bitmap.rowBytes)
         }
     }
@@ -77,7 +77,7 @@ class ImageViewModel : ViewModel() {
         if (state.previewState == PreviewState.Inverted) return
         val originalBuffer = originalBuffer ?: return
         val bitmap = bitmap ?: return
-        applyTransformation(originalBuffer, bitmap) { buffer, bitmap ->
+        applyTransformation(originalBuffer, bitmap, PreviewState.Inverted) { buffer, bitmap ->
             lib.invert(buffer, bitmap.height, bitmap.rowBytes)
         }
     }
@@ -85,6 +85,7 @@ class ImageViewModel : ViewModel() {
     private fun applyTransformation(
         originalBuffer: ByteBuffer,
         bitmap: Bitmap,
+        previewState: PreviewState,
         transformation: (ByteBuffer, Bitmap) -> Unit
     ) {
         val buffer = ByteBuffer.allocateDirect(originalBuffer.capacity())
@@ -97,7 +98,7 @@ class ImageViewModel : ViewModel() {
         _state.update {
             it.copy(
                 image = bitmap.asImageBitmap(),
-                previewState = PreviewState.Grayscale
+                previewState = previewState
             )
         }
     }
